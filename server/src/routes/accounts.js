@@ -8,7 +8,8 @@ const router = express.Router();
 
 router.post("/", isLoggedIn, async (req, res) => {
 
-    let { groupId: group_id, userId: user_id } = req.body;
+    let { groupId: group_id } = req.body;
+    let { id: user_id } = req.user;
     let response;
 
     try {
