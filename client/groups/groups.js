@@ -11,6 +11,12 @@ class GroupCard {
         this.createGroupIdElement();
         this.createNameElement();
         this.cardContainer.append(this.groupIdElement, this.nameElement);
+        this.cardContainer.addEventListener("click", (event) => {
+            event.preventDefault();
+            const groupId = this.cardContainer.querySelector("h3").textContent.split(" ")[2];
+
+            window.location.href = `../bills/bills.html?groupId=${groupId}`;
+        });
     }
     createGroupIdElement() {
 
@@ -63,12 +69,12 @@ const loadContent = async () => {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
-
     loadContent();
+
 });
 
 document.querySelector("form#groupCreationForm").addEventListener("submit", async (event) => {
-
+    event.preventDefault();
     const groupId = document.querySelector("input#groupId").value;
 
     const response = await fetch("//localhost:3001/api/v1/accounts",
@@ -83,7 +89,20 @@ document.querySelector("form#groupCreationForm").addEventListener("submit", asyn
     );
 
     const responseJson = await response.json();
-    console.log(responseJson);
+    if (responseJson.message) {
+        console.log(responseJson.message);
+        displayMessage(responseJson.message);
+    }
+    if (response.status == 201) {
+        window.location.href = `../groups/groups.html`;
+    }
 });
 
-document.querySelectorAll("div#contentContainer div").forEach((groupCard) => {
+
+const displayMessage = (message) => {
+    const contentContainer = document.querySelector("div#contentContainer");
+    const messageElement = document.createElement("p");
+    messageElement.classList.add('text-red-500');
+    messageElement.textContent = message;
+    contentContainer.appendChild(messageElement);
+};

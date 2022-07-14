@@ -1,35 +1,55 @@
-class GroupCard {
-    constructor(group) {
-        let { group_id: groupId, name } = group;
-        this.groupId = groupId;
-        this.name = name;
-        this.createCardContainer();
+class BillTable {
+    constructor(bills) {
+        this.bills = bills;
+        this.createTable();
     }
-    createCardContainer() {
-        this.cardContainer = document.createElement('div');
-        this.cardContainer.classList.add("rounded", "border-solid", "border-2", "w-1/4", "min-h-max", "min-w-fit", "h-32", "p-6", "text-center", "shadow-md", "shadow-cyan-500/50");
-        this.createGroupIdElement();
-        this.createNameElement();
-        this.cardContainer.append(this.groupIdElement, this.nameElement);
+    createTable() {
+        this.tableElement = document.createElement('table');
+        this.tableElement.classList.add("table-auto", "w-full", "h-auto", "min-h-max", "min-w-fit", "h-32", "p-6", "text-center", "shadow-md", "shadow-cyan-500/50");
+        this.createHeadElement();
+        this.createBodyElement();
+        this.tableElement.append(this.headElement, this.bodyElement);
     }
-    createGroupIdElement() {
+    createHeadElement() {
+        this.headElement = document.createElement("thead");
+        this.headElement.classList.add("bg-gray-200");
+        const rowElement = document.createElement("tr");
+        const idCellElement = document.createElement("th");
 
-        this.groupIdElement = document.createElement("h3");
-        this.groupIdElement.classList.add("mb-4", "text-xl");
-        this.groupIdElement.textContent = `Group ID: ${this.groupId}`;
-    }
-    createNameElement() {
+        const descriptionCellElement = document.createElement("th");
+        const amountCellElement = document.createElement("th");
 
-        this.nameElement = document.createElement("p");
-        this.nameElement.textContent = this.name;
+        idCellElement.textContent = "ID";
+        descriptionCellElement.textContent = "Description";
+        amountCellElement.textContent = "Amount";
+        rowElement.append(idCellElement, descriptionCellElement, amountCellElement);
+        this.headElement.append(rowElement);
+    }
+    createBodyElement() {
+        this.bodyElement = document.createElement("tbody");
+
+        for (let bill of this.bills) {
+            console.log(bill);
+            const rowElement = document.createElement("tr");
+            const idCellElement = document.createElement("td");
+            const descriptionCellElement = document.createElement("td");
+            const amountCellElement = document.createElement("td");
+
+            idCellElement.textContent = bill.id;
+            descriptionCellElement.textContent = bill.description;
+            amountCellElement.textContent = `$${bill.amount || 0}`;
+            rowElement.append(idCellElement, descriptionCellElement, amountCellElement);
+            this.bodyElement.append(rowElement);
+        }
+
     }
 
-    getCardContainer() {
-        return this.cardContainer;
+    getTable() {
+        return this.tableElement;
     }
 
 }
-const getAccounts = async () => await fetch("//localhost:3001/api/v1/accounts",
+const getBills = async (groupId) => await fetch(`//localhost:3001/api/v1/bills/${groupId}}`,
     {
         method: 'GET',
         headers: {
@@ -39,51 +59,76 @@ const getAccounts = async () => await fetch("//localhost:3001/api/v1/accounts",
     }
 );
 
-const clearGroups = () => {
+const clearBills = () => {
     const groupsDisplay = document.querySelector("div#contentContainer");
     groupsDisplay.replaceChildren();
 }
 
-const displayGroups = async (accounts) => {
+const displayBills = async (bills) => {
     const contentContainer = document.querySelector("div#contentContainer");
-    for (let account of accounts) {
-        const groupCard = new GroupCard({ "group_id": account.group_id, "name": account.name });
-        contentContainer.appendChild(groupCard.getCardContainer());
-    }
+    const billTable = new BillTable(bills);
+    contentContainer.appendChild(billTable.getTable());
 };
 
 const loadContent = async () => {
     if (localStorage.getItem("token")) {
-        const accounts = await (await getAccounts()).json();
-        displayGroups(accounts.accounts);
+        const groupId = getGroupId();
+        if (!groupId) {
+            window.location.href = "../groups/groups.html";
+        }
+        const responseJson = await (await getBills(groupId)).json();
+        if (responseJson.message) {
+            displayMessage(responseJson.message);
+        }
+        else {
+            displayBills(responseJson.bills);
+        }
     }
     else {
         window.location.href = "../login/login.html";
     }
 };
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", async () => loadContent());
 
-    loadContent();
-});
+document.querySelector("form#billCreationForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const groupId = getGroupId();
+    const amount = document.querySelector("input#amount").value;
+    const description = document.querySelector("input#description").value;
 
-document.querySelector("form#groupCreationForm").addEventListener("submit", async (event) => {
-
-    const groupId = document.querySelector("input#groupId").value;
-
-    const response = await fetch("//localhost:3001/api/v1/accounts",
+    const response = await fetch("//localhost:3001/api/v1/bills",
         {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem("token")}`
             },
-            body: JSON.stringify({ "groupId": groupId })
+            body: JSON.stringify({ "groupId": groupId, "amount": amount, "description": description })
         }
     );
 
     const responseJson = await response.json();
-    console.log(responseJson);
+    if (responseJson.message) {
+        displayMessage(responseJson.message);
+    }
+    if (response.status == 201) {
+        window.location.href = `../bills/bills.html?groupId=${groupId}`;
+    }
 });
 
-document.querySelectorAll("div#contentContainer div").forEach((groupCard) => {
+
+const getGroupId = () => {
+    const params = new Proxy(new URLSearchParams(window.location.search), {
+        get: (searchParams, prop) => searchParams.get(prop),
+    });
+    return params.groupId;
+};
+
+const displayMessage = (message) => {
+    const contentContainer = document.querySelector("div#contentContainer");
+    const messageElement = document.createElement("p");
+    messageElement.classList.add('text-red-500');
+    messageElement.textContent = message;
+    contentContainer.appendChild(messageElement);
+}

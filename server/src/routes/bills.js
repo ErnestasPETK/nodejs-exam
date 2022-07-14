@@ -1,7 +1,7 @@
 const express = require('express');
 const { isLoggedIn } = require('..//middleware/middleware');
 const mysql = require('mysql2/promise');
-const { MYSQL_CONFIG } = require('../config');
+const { MYSQL_CONFIG, billSchema } = require('../config');
 
 const router = express.Router();
 
@@ -10,6 +10,13 @@ router.post("/", isLoggedIn, async (req, res) => {
 
     let { groupId: group_id, amount, description } = req.body;
     let response;
+
+    try {
+        await billSchema.validateAsync({ group_id, amount, description })
+    }
+    catch (err) {
+        return res.status(400).json({ message: err.details[0].message });
+    }
 
     try {
         const connection = await mysql.createConnection(MYSQL_CONFIG);

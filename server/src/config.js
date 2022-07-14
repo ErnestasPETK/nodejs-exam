@@ -15,14 +15,18 @@ const userRegisterSchema = Joi.object({
     repeat_password: Joi.ref('password'),
 }).with('password', 'repeat_password');
 
-
+const accountsSchema = Joi.object({
+    group_id: Joi.number().min(0).required(),
+    user_id: Joi.number().min(0).required(),
+});
 
 const groupSchema = Joi.object({
     name: Joi.string().required(),
 });
 
 const billSchema = Joi.object({
-    amount: Joi.number().max(250).required(),
+    group_id: Joi.number().min(1).required(),
+    amount: Joi.number().min(0.01).max(250).required(),
     description: Joi.string().required(),
 });
 
@@ -47,5 +51,6 @@ module.exports = {
     userRegisterSchema,
     groupSchema,
     billSchema,
+    accountsSchema,
     JWT_SECRET
 }
