@@ -2,7 +2,6 @@ document.querySelector("form#loginForm").addEventListener("submit", async (event
     event.preventDefault();
     const email = event.target.querySelector("input#email").value;
     const password = event.target.querySelector("input#password").value;
-    const fullName = event.target.querySelector("input#fullName").value;
     const response = await fetch("//localhost:3001/api/v1/login", {
         method: 'POST',
         headers: {
@@ -10,7 +9,6 @@ document.querySelector("form#loginForm").addEventListener("submit", async (event
         },
         body: JSON.stringify({
             email: email,
-            full_name: fullName,
             password: password,
         }),
     });
