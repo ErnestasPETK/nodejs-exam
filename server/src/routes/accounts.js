@@ -1,7 +1,7 @@
 const express = require('express');
 const { isLoggedIn } = require('..//middleware/middleware');
 const mysql = require('mysql2/promise');
-const { MYSQL_CONFIG } = require('../config');
+const { MYSQL_CONFIG, accountsSchema } = require('../config');
 
 const router = express.Router();
 
@@ -13,23 +13,30 @@ router.post("/", isLoggedIn, async (req, res) => {
     let response;
 
     try {
+        await accountsSchema.validateAsync({ group_id, user_id });
+    }
+    catch (err) {
+        return res.status(400).json({ message: err.details[0].message });
+    }
+
+    try {
         const connection = await mysql.createConnection(MYSQL_CONFIG);
 
-        [response] = await connection.execute(`INSERT INTO accounts (group_id, user_id) VALUES (${mysql.escape(group_id)},${mysql.escape(user_id)} )`);
-
+        [response] = await connection.execute(`INSERT INTO accounts (group_id, user_id) SELECT ${mysql.escape(group_id)},'${mysql.escape(user_id)}' FROM (SELECT 1 as dummy) s WHERE NOT EXISTS (SELECT group_id, user_id FROM accounts WHERE accounts.group_id = ${mysql.escape(group_id)} AND accounts.user_id = '${mysql.escape(user_id)}');`);
         await connection.end();
 
         if (response.affectedRows === 1) {
             return res.status(201).send({ "message": "Account created" });
         }
         else if (response.affectedRows === 0) {
-            return res.status(400).send({ "message": "Failed to insert account" });
+            return res.status(400).send({ "message": "Account has already been added" });
         }
         else {
             return res.status(200).send({ "response": response });
         }
     }
     catch (err) {
+        console.log(err);
         return res.status(404).send({ err: `Bad request  ${err}` });
     }
 });

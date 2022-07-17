@@ -90,7 +90,6 @@ document.querySelector("form#groupCreationForm").addEventListener("submit", asyn
 
     const responseJson = await response.json();
     if (responseJson.message) {
-        console.log(responseJson.message);
         displayMessage(responseJson.message);
     }
     if (response.status == 201) {
@@ -99,10 +98,13 @@ document.querySelector("form#groupCreationForm").addEventListener("submit", asyn
 });
 
 
-const displayMessage = (message) => {
+const displayMessage = async (message) => {
     const contentContainer = document.querySelector("div#contentContainer");
     const messageElement = document.createElement("p");
-    messageElement.classList.add('text-red-500');
+    messageElement.classList.add('text-red-500', 'absolute', 'top-full', 'left-0', 'right-0', 'text-center', 'text-xl', 'font-bold', 'mb-16');
     messageElement.textContent = message;
     contentContainer.appendChild(messageElement);
+    setTimeout(() => {
+        contentContainer.removeChild(messageElement);
+    }, 1000);
 };

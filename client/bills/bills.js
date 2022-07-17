@@ -29,7 +29,6 @@ class BillTable {
         this.bodyElement = document.createElement("tbody");
 
         for (let bill of this.bills) {
-            console.log(bill);
             const rowElement = document.createElement("tr");
             const idCellElement = document.createElement("td");
             const descriptionCellElement = document.createElement("td");
@@ -125,10 +124,13 @@ const getGroupId = () => {
     return params.groupId;
 };
 
-const displayMessage = (message) => {
-    const contentContainer = document.querySelector("div#contentContainer");
+const displayMessage = async (message) => {
+    const contentContainer = document.querySelector("main");
     const messageElement = document.createElement("p");
-    messageElement.classList.add('text-red-500');
+    messageElement.classList.add('text-red-500', 'absolute', 'top-1/2', 'left-0', 'right-0', 'text-center', 'text-xl', 'font-bold', 'mb-16');
     messageElement.textContent = message;
     contentContainer.appendChild(messageElement);
-}
+    setTimeout(() => {
+        contentContainer.removeChild(messageElement);
+    }, 1000);
+};

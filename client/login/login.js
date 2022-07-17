@@ -21,3 +21,4 @@ document.querySelector("form#loginForm").addEventListener("submit", async (event
         alert("Invalid email or password");
     }
 });
+
