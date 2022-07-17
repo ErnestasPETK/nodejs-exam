@@ -1,41 +1,41 @@
-class ArticleCard {
-    constructor(article) {
-        const { content, date, title } = article;
-        this.date = date.split("T")[0];
-        this.title = title;
-        this.content = content;
+class GroupCard {
+    constructor(group) {
+        let { group_id: groupId, name } = group;
+        this.groupId = groupId;
+        this.name = name;
         this.createCardContainer();
     }
     createCardContainer() {
         this.cardContainer = document.createElement('div');
-        this.cardContainer.classList.add("rounded", "border-solid", "border-2", "w-1/4", "p-6", "shadow-lg", "text-center");
-        this.createDateElement();
-        this.createContentElement();
-        this.createTitleElement();
-        this.cardContainer.append(this.titleElement, this.dateElement, this.contentElement);
-    }
-    createDateElement() {
+        this.cardContainer.classList.add("rounded", "border-solid", "border-2", "w-1/4", "min-h-max", "min-w-fit", "h-32", "p-6", "text-center", "shadow-md", "shadow-cyan-500/50");
+        this.createGroupIdElement();
+        this.createNameElement();
+        this.cardContainer.append(this.groupIdElement, this.nameElement);
+        this.cardContainer.addEventListener("click", (event) => {
+            event.preventDefault();
+            const groupId = this.cardContainer.querySelector("h3").textContent.split(" ")[2];
 
-        this.dateElement = document.createElement("p");
-        this.dateElement.textContent = this.date;
+            window.location.href = `../bills/bills.html?groupId=${groupId}`;
+        });
     }
-    createContentElement() {
+    createGroupIdElement() {
 
-        this.contentElement = document.createElement("p");
-        this.contentElement.textContent = this.content;
+        this.groupIdElement = document.createElement("h3");
+        this.groupIdElement.classList.add("mb-4", "text-xl");
+        this.groupIdElement.textContent = `Group ID: ${this.groupId}`;
     }
-    createTitleElement() {
+    createNameElement() {
 
-        this.titleElement = document.createElement("h3");
-        this.titleElement.classList.add("mb-4");
-        this.titleElement.textContent = this.title;
+        this.nameElement = document.createElement("p");
+        this.nameElement.textContent = this.name;
     }
+
     getCardContainer() {
         return this.cardContainer;
     }
 
 }
-const getArticles = async () => await fetch("//localhost:3001/api/v1/content",
+const getAccounts = async () => await fetch("//localhost:3001/api/v1/accounts",
     {
         method: 'GET',
         headers: {
@@ -45,23 +45,23 @@ const getArticles = async () => await fetch("//localhost:3001/api/v1/content",
     }
 );
 
-const clearArticles = () => {
-    const articlesDisplay = document.querySelector("div#contentContainer");
-    articlesDisplay.replaceChildren();
+const clearGroups = () => {
+    const groupsDisplay = document.querySelector("div#contentContainer");
+    groupsDisplay.replaceChildren();
 }
 
-const displayArticles = async (articles) => {
+const displayGroups = async (accounts) => {
     const contentContainer = document.querySelector("div#contentContainer");
-    for (let article of articles) {
-        const articleCard = new ArticleCard(article);
-        contentContainer.appendChild(articleCard.getCardContainer());
+    for (let account of accounts) {
+        const groupCard = new GroupCard({ "group_id": account.group_id, "name": account.name });
+        contentContainer.appendChild(groupCard.getCardContainer());
     }
 };
 
 const loadContent = async () => {
     if (localStorage.getItem("token")) {
-        const articles = await (await getArticles()).json();
-        displayArticles(articles.articles);
+        const accounts = await (await getAccounts()).json();
+        displayGroups(accounts.accounts);
     }
     else {
         window.location.href = "../login/login.html";
@@ -69,6 +69,42 @@ const loadContent = async () => {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
-
     loadContent();
+
 });
+
+document.querySelector("form#groupCreationForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const groupId = document.querySelector("input#groupId").value;
+
+    const response = await fetch("//localhost:3001/api/v1/accounts",
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem("token")}`
+            },
+            body: JSON.stringify({ "groupId": groupId })
+        }
+    );
+
+    const responseJson = await response.json();
+    if (responseJson.message) {
+        displayMessage(responseJson.message);
+    }
+    if (response.status == 201) {
+        window.location.href = `../groups/groups.html`;
+    }
+});
+
+
+const displayMessage = async (message) => {
+    const contentContainer = document.querySelector("div#contentContainer");
+    const messageElement = document.createElement("p");
+    messageElement.classList.add('text-red-500', 'absolute', 'top-full', 'left-0', 'right-0', 'text-center', 'text-xl', 'font-bold', 'mb-16');
+    messageElement.textContent = message;
+    contentContainer.appendChild(messageElement);
+    setTimeout(() => {
+        contentContainer.removeChild(messageElement);
+    }, 1000);
+};

@@ -3,10 +3,21 @@ const dotenvExpand = require('dotenv-expand');
 dotenvExpand.expand(dotEnv);
 const Joi = require('joi');
 
-const userSchema = Joi.object({
+const userLoginSchema = Joi.object({
+    email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
+    password: Joi.string().required(),
+});
+
+const userRegisterSchema = Joi.object({
     email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
     full_name: Joi.string().required(),
     password: Joi.string().required(),
+    repeat_password: Joi.ref('password'),
+}).with('password', 'repeat_password');
+
+const accountsSchema = Joi.object({
+    group_id: Joi.number().min(0).required(),
+    user_id: Joi.number().min(0).required(),
 });
 
 const groupSchema = Joi.object({
@@ -14,7 +25,8 @@ const groupSchema = Joi.object({
 });
 
 const billSchema = Joi.object({
-    amount: Joi.number().max(250).required(),
+    group_id: Joi.number().min(1).required(),
+    amount: Joi.number().min(0.01).max(250).required(),
     description: Joi.string().required(),
 });
 
@@ -28,15 +40,17 @@ const MYSQL_CONFIG = {
     password: process.env.DATABASE_PASSWORD,
     database: process.env.DATABASE,
     port: process.env.DATABASE_PORT
-}
+};
 
 
 
 
 module.exports = {
     MYSQL_CONFIG,
-    userSchema,
+    userLoginSchema,
+    userRegisterSchema,
     groupSchema,
     billSchema,
+    accountsSchema,
     JWT_SECRET
 }

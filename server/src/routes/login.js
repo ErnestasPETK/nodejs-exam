@@ -2,7 +2,7 @@ const mysql = require('mysql2/promise');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 
-const { MYSQL_CONFIG, userSchema, JWT_SECRET } = require('../config');
+const { MYSQL_CONFIG, userLoginSchema, JWT_SECRET } = require('../config');
 
 const router = express.Router();
 
@@ -15,10 +15,10 @@ router.post("/", async (req, res) => {
     let response;
     try {
 
-        userData = await userSchema.validateAsync(userData);
+        userData = await userLoginSchema.validateAsync(userData);
     }
     catch (err) {
-        res.status(400).send({ err: `Incorrect email or password  ${err}` });
+        return res.status(400).send({ err: `Incorrect email or password  ${err}` });
     }
 
     try {
